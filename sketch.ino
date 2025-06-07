@@ -1,44 +1,55 @@
-w#include <WiFi.h> 
+#include <WiFi.h>
 #include <ThingSpeak.h>
 #include <DHT.h>
 
+// --- CONFIGURAÇÃO DOS SENSORES ---
 #define DHTPIN 21
 #define DHTTYPE DHT22
-
-DHT dht(DHTPIN, DHTTYPE);
-
 const int trigPin = 23;
 const int echoPin = 22;
 
-// Informações da rede Wi-Fi
-const char* ssid = "Wokwi-GUEST";           // Substitua com o nome da sua rede Wi-Fi
-const char* password = "";      // Substitua com a senha da sua rede Wi-Fi
+// --- CONFIGURAÇÃO DO ATUADOR (NOVO) ---
+#define SIRENE_PIN 13 // Pino onde o LED/Sirene está conectado
 
-// Configuração do ThingSpeak
-unsigned long channelID = 2979598;        // Substitua com o ID do seu canal no ThingSpeak
-const char* writeAPIKey = "CCDYC36P8A6NT8CH"; // Substitua com sua Write API Key
+DHT dht(DHTPIN, DHTTYPE);
 
-WiFiClient client;  // Criação do objeto cliente Wi-Fi
+// --- INFORMAÇÕES DA REDE WI-FI ---
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+
+// --- CONFIGURAÇÃO DO THINGSPEAK ---
+unsigned long channelID = 2983238;          // ID do ThingSpeak
+const char* writeAPIKey = "NTRRVFUZOZLZ18PB"; // Write API Key
+const char* readAPIKey = "N108DGNCAMCEWLDK"; // Read API Key
+
+WiFiClient client;
 
 void setup() {
   Serial.begin(115200);
 
-  // Inicializa o DHT22
+  // Inicializa o sensor DHT22
   dht.begin();
+
+  // Define os pinos para o sensor ultrassônico
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Define o pino para a sirene (NOVO)
+  pinMode(SIRENE_PIN, OUTPUT);
+  digitalWrite(SIRENE_PIN, LOW); // Garante que a sirene comece desligada
+  Serial.println("Pino da sirene configurado.");
 
   // Conecta ao Wi-Fi
   Serial.println("Conectando-se ao Wi-Fi...");
   WiFi.begin(ssid, password);
 
-  // Espera pela conexão Wi-Fi
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-    delay(1000);  // Atraso de 1 segundo entre as tentativas
+    delay(1000);
     Serial.print(".");
     attempts++;
   }
 
-  // Verifica o status da conexão
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nConectado ao Wi-Fi!");
     Serial.print("IP: ");
@@ -50,58 +61,72 @@ void setup() {
 
   // Conecta ao ThingSpeak
   ThingSpeak.begin(client);
-  
-  // Definir pinos para o sensor ultrassônico
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
 }
 
 void loop() {
+  // --- LEITURA DOS SENSORES ---
   // Medir a distância com o HC-SR04 (nível da água)
-  long duration, distance;
-  
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  duration = pulseIn(echoPin, HIGH);
-  distance = (duration / 2) * 0.0344; // Convertendo para cm
+  long duration = pulseIn(echoPin, HIGH);
+  long distance = (duration / 2) * 0.0344;
 
   // Medir a umidade e temperatura do DHT22
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
 
-  // Verificar se a leitura do DHT falhou
   if (isnan(humidity) || isnan(temperature)) {
     Serial.println("Falha na leitura do DHT22!");
-    return;
-  }
-
-  // Exibir os dados no monitor serial
-  Serial.print("Distância (nível da água): ");
-  Serial.print(distance);
-  Serial.println(" cm");
-
-  Serial.print("Temperatura: ");
-  Serial.print(temperature);
-  Serial.print("C  Umidade: ");
-  Serial.print(humidity);
-  Serial.println("%");
-
-  // Enviar os dados para o ThingSpeak
-  ThingSpeak.setField(1, temperature);  // Envia a temperatura para o campo 1
-  ThingSpeak.setField(2, humidity);     // Envia a umidade para o campo 2
-  ThingSpeak.setField(3, distance);     // Envia a distância (nível da água) para o campo 3
-
-  // Atualiza o canal do ThingSpeak
-  int x = ThingSpeak.writeFields(channelID, writeAPIKey);
-  if(x == 200) {
-    Serial.println("Dados enviados com sucesso para o ThingSpeak!");
   } else {
-    Serial.println("Erro ao enviar os dados para o ThingSpeak.");
+    // Exibir os dados no monitor serial
+    Serial.println("\n--- DADOS DOS SENSORES ---");
+    Serial.print("Distância (nível da água): ");
+    Serial.print(distance);
+    Serial.println(" cm");
+
+    Serial.print("Temperatura: ");
+    Serial.print(temperature);
+    Serial.print("°C | Umidade: ");
+    Serial.print(humidity);
+    Serial.println("%");
+
+    // --- ENVIO DOS DADOS PARA O THINGSPEAK ---
+    ThingSpeak.setField(1, temperature);
+    ThingSpeak.setField(2, humidity);
+    ThingSpeak.setField(3, distance);
+
+    int writeStatusCode = ThingSpeak.writeFields(channelID, writeAPIKey);
+    if (writeStatusCode == 200) {
+      Serial.println("Dados enviados com sucesso para o ThingSpeak!");
+    } else {
+      Serial.println("Erro ao enviar dados. HTTP status: " + String(writeStatusCode));
+    }
   }
 
-  delay(20000); // Aguarda 20 segundos antes de enviar novamente (limite de atualização do ThingSpeak)
+  // --- CONTROLE DO ATUADOR (SIRENE) - (NOVO) ---
+  Serial.println("\n--- VERIFICANDO COMANDO DA SIRENE ---");
+  // Lê o comando do Field 4 do ThingSpeak
+  int comandoSirene = ThingSpeak.readIntField(channelID, 4, readAPIKey);
+  int readStatusCode = ThingSpeak.getLastReadStatus();
+
+  if (readStatusCode == 200) {
+    Serial.print("Comando da sirene recebido do Field 4: ");
+    Serial.println(comandoSirene);
+    if (comandoSirene == 1) {
+      digitalWrite(SIRENE_PIN, HIGH); // Liga o LED
+      Serial.println(">>> ALERTA! SIRENE LIGADA! <<<");
+    } else {
+      digitalWrite(SIRENE_PIN, LOW);  // Desliga o LED
+      Serial.println("Sirene desligada.");
+    }
+  } else {
+    Serial.println("Erro ao ler comando da sirene. HTTP status: " + String(readStatusCode));
+  }
+
+  Serial.println("\nAguardando 20 segundos para o próximo ciclo...");
+  delay(20000);
 }

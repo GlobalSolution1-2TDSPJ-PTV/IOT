@@ -6,24 +6,25 @@
     { "type": "wokwi-breadboard", "id": "bb1", "top": 227.4, "left": -227.6, "attrs": {} },
     { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 460.8, "left": 91.24, "attrs": {} },
     { "type": "wokwi-hc-sr04", "id": "ultrasonic1", "top": 49.5, "left": 322.3, "attrs": {} },
-    { "type": "wokwi-dht22", "id": "dht1", "top": -9.3, "left": 177, "attrs": {} }
+    { "type": "wokwi-dht22", "id": "dht1", "top": -9.3, "left": 177, "attrs": {} },
+    { "type": "wokwi-led", "id": "led1", "top": 240.2, "left": 30, "attrs": { "color": "red" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": 265.75, "left": -72, "attrs": { "value": "220" } }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
     [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "esp:5V", "bb1:bp.50", "red", [ "h-47.85", "v57.6", "h336", "v-307.2" ] ],
-    [ "esp:GND.3", "bb1:bn.50", "black", [ "h182.4", "v-9.6" ] ],
-    [ "esp:21", "dht1:SDA", "green", [ "h0" ] ],
-    [ "esp:22", "ultrasonic1:ECHO", "green", [ "h0" ] ],
-    [ "esp:23", "ultrasonic1:TRIG", "green", [ "h0" ] ],
-    [ "bb1:bp.47", "bb1:58b.i", "red", [ "v0" ] ],
-    [ "ultrasonic1:VCC", "bb1:58b.f", "red", [ "v0", "h-67.2" ] ],
-    [ "bb1:bn.43", "bb1:53b.i", "black", [ "v0" ] ],
-    [ "ultrasonic1:GND", "bb1:53b.f", "black", [ "v38.4", "h-126" ] ],
-    [ "bb1:bn.37", "bb1:46b.j", "black", [ "v0" ] ],
-    [ "bb1:bp.33", "bb1:41b.j", "red", [ "v0" ] ],
-    [ "dht1:GND", "bb1:46b.f", "black", [ "v0", "h9.6" ] ],
-    [ "dht1:VCC", "bb1:41b.f", "red", [ "v0", "h-19.2" ] ]
+    [ "esp:5V", "bb1:p.2.f", "red", [ "v0", "h-152.15", "v57.6", "h192", "v-307.2" ] ],
+    [ "esp:GND.3", "bb1:n.2.f", "black", [ "v0", "h182.4", "v-9.6" ] ],
+    [ "esp:21", "dht1:SDA", "green", [ "h-115.2", "v-307.1" ] ],
+    [ "esp:22", "ultrasonic1:ECHO", "green", [ "h-48.4", "v-163.2" ] ],
+    [ "esp:23", "ultrasonic1:TRIG", "green", [ "h-38.8", "v-192" ] ],
+    [ "ultrasonic1:VCC", "bb1:p.10.f", "red", [ "v0", "h-144" ] ],
+    [ "ultrasonic1:GND", "bb1:n.10.f", "black", [ "v0", "h-153.6" ] ],
+    [ "dht1:GND", "bb1:n.6.f", "black", [ "v0", "h-105.6" ] ],
+    [ "dht1:VCC", "bb1:p.6.f", "red", [ "v0", "h-115.2" ] ],
+    [ "r1:2", "led1:A", "green", [ "h0", "v-19.2" ] ],
+    [ "led1:C", "bb1:n.12.f", "black", [ "v0", "h-163.2" ] ],
+    [ "esp:13", "r1:1", "green", [ "h-153.6", "v-192" ] ]
   ],
   "dependencies": {}
 }
