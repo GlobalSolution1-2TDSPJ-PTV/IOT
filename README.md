@@ -74,6 +74,8 @@ const char* readAPIKey = "6C87V78PUWOZN1PF";
 ### ✅ Simulação no Wokwi
 - Acesse https://wokwi.com
 - Importe o projeto com o código e circuito acima
+- Copie o Diagram.json e coloque no Diagram.json do wokwi
+- Copie o sketch.ino e coloque no sketch.ino do wokwi
 - Clique em "Start Simulation"
 - Acompanhe o monitor serial para ver os dados sendo enviados e o alerta acionado
 
