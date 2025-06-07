@@ -18,9 +18,9 @@ const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 
 // --- CONFIGURAÇÃO DO THINGSPEAK ---
-unsigned long channelID = 2983238;          // ID do ThingSpeak
-const char* writeAPIKey = "NTRRVFUZOZLZ18PB"; // Write API Key
-const char* readAPIKey = "N108DGNCAMCEWLDK"; // Read API Key
+unsigned long channelID = 2979598;          // ID do ThingSpeak
+const char* writeAPIKey = "CCDYC36P8A6NT8CH"; // Write API Key
+const char* readAPIKey = "6C87V78PUWOZN1PF"; // Read API Key
 
 WiFiClient client;
 
@@ -98,6 +98,11 @@ void loop() {
     ThingSpeak.setField(1, temperature);
     ThingSpeak.setField(2, humidity);
     ThingSpeak.setField(3, distance);
+    if(distance < 10 && humidity > 80){
+      ThingSpeak.setField(4, 1);
+    } else {
+      ThingSpeak.setField(4, 0);
+    }
 
     int writeStatusCode = ThingSpeak.writeFields(channelID, writeAPIKey);
     if (writeStatusCode == 200) {
@@ -106,7 +111,7 @@ void loop() {
       Serial.println("Erro ao enviar dados. HTTP status: " + String(writeStatusCode));
     }
   }
-
+  
   // --- CONTROLE DO ATUADOR (SIRENE) - (NOVO) ---
   Serial.println("\n--- VERIFICANDO COMANDO DA SIRENE ---");
   // Lê o comando do Field 4 do ThingSpeak
